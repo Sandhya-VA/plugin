@@ -1,0 +1,17 @@
+{
+  "name": "climate_insight_tracker_backend",
+  "version": "1.0.0",
+  "description": "Backend API for Climate_Insight_Tracker_Backend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "@aws-sdk/client-dynamodb": "^3.693.0",
+    "body-parser": "^1.20.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1"
+  },
+  "author": "Sandhya Venkataramaiah <sandhya.venkataramaiah@vanderbilt.edu>"
+}
