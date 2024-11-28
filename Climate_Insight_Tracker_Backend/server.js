@@ -2,7 +2,7 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const { saveSearchData } = require('./config/dynamoDB');
 require('dotenv').config();
-
+const cors = require('cors');
 const app = express();
 
 // Middleware to parse JSON requests
