@@ -1,0 +1,57 @@
+{
+  "manifest_version": 3,
+  "name": "Climate Insight Tracker",
+  "version": "1.0",
+  "description": "A Chrome extension to track search queries and interactions for climate insights.",
+  "author": "Sandhya Venkataramaiah",
+  "permissions": [
+    "tabs",
+    "scripting",
+    "storage",
+    "activeTab",
+    "webNavigation"
+  ],
+  "host_permissions": [
+    "https://www.google.com/*",
+    "http://localhost:3000/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "images/TrackerIcon.png",
+      "48": "images/TrackerIcon.png",
+      "128": "images/TrackerIcon.png"
+    }
+  },
+  "icons": {
+    "16": "images/Vanderbilt-Logo.png",
+    "48": "images/Vanderbilt-Logo.png",
+    "128": "images/Vanderbilt-Logo.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://www.google.com/search*"],
+      "js": ["content.js"]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "images/TrackerIcon.png",
+        "images/Vanderbilt-Logo.png"
+      ],
+      "matches": ["<all_urls>"]
+    }
+  ],
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Alt+Shift+T"
+      },
+      "description": "Activate Climate Insight Tracker"
+    }
+  }
+}
