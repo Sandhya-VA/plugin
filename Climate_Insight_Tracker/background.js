@@ -1,21 +1,20 @@
 let trackingActive = false;
 let userID = '';
 let trackedTabId = null;
-const formUrl = "https://forms.gle/AjCuW8zVzPuNGbEk9";
 let sessionSearchActivities = [];
 let rightClickedLinks = [];
 
-// Start tracking function
+// Replace with your deployed API Gateway endpoint
+const API_ENDPOINT = "https://your-api-gateway-url.amazonaws.com/prod";
+
 function startTracking(tabId) {
     trackingActive = true;
     trackedTabId = tabId;
     sessionSearchActivities = [];
 }
 
-// Stop tracking function
 function stopTracking() {
     if (!trackingActive) return;
-
     trackingActive = false;
 
     if (userID && sessionSearchActivities.length > 0) {
@@ -25,69 +24,69 @@ function stopTracking() {
             searchActivities: sessionSearchActivities,
         };
 
-        fetch("http://localhost:3000/storeData", {
+        // Send to Lambda — stores in DynamoDB and runs bias analysis via GPT
+        fetch(`${API_ENDPOINT}/analyze`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify(sessionData),
-        }).catch(error => console.error("Error storing data:", error));
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.biasReport) {
+                // Store bias report locally so popup can display it
+                chrome.storage.local.set({ lastBiasReport: data.biasReport });
+            }
+        })
+        .catch(err => console.error("Error sending session data:", err));
     }
 
     trackedTabId = null;
     rightClickedLinks = [];
 }
 
-// Ensure unique search activities
 function ensureUniqueSearchActivity(searchQuery) {
-    if (!sessionSearchActivities.find(activity => activity.searchQuery === searchQuery)) {
-        sessionSearchActivities.push({
-            searchQuery,
-            resultLinks: [],
-            clickedLinks: [],
-        });
+    if (!sessionSearchActivities.find(a => a.searchQuery === searchQuery)) {
+        sessionSearchActivities.push({ searchQuery, resultLinks: [], clickedLinks: [] });
     }
 }
 
-// Listener for messages from content scripts
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     switch (message.type) {
         case "setUserID":
             userID = message.userID;
             sendResponse({ status: "success" });
             break;
-
         case "resultLinks":
-            const lastActivity = sessionSearchActivities[sessionSearchActivities.length - 1];
-            if (lastActivity) {
-                lastActivity.resultLinks = message.resultLinks.slice(0, 10);
-            }
+            const last = sessionSearchActivities[sessionSearchActivities.length - 1];
+            if (last) last.resultLinks = message.resultLinks.slice(0, 10);
             break;
-
         case "linkClicked":
-            const clickedActivity = sessionSearchActivities[sessionSearchActivities.length - 1];
-            if (clickedActivity && !clickedActivity.clickedLinks.includes(message.clickedLink)) {
-                clickedActivity.clickedLinks.push(message.clickedLink);
+            const clicked = sessionSearchActivities[sessionSearchActivities.length - 1];
+            if (clicked && !clicked.clickedLinks.includes(message.clickedLink)) {
+                clicked.clickedLinks.push(message.clickedLink);
             }
             break;
-
         case "linkRightClicked":
             if (!rightClickedLinks.includes(message.clickedLink)) {
                 rightClickedLinks.push(message.clickedLink);
             }
             break;
-
+        case "getBiasReport":
+            chrome.storage.local.get("lastBiasReport", (result) => {
+                sendResponse({ report: result.lastBiasReport || null });
+            });
+            return true;
         default:
             break;
     }
     return true;
 });
 
-// Capture search activity on completed navigation
 chrome.webNavigation.onCompleted.addListener((details) => {
-    if (trackingActive && details.tabId !== trackedTabId && details.url.includes("https://www.google.com/search")) {
+    if (trackingActive && details.url.includes("https://www.google.com/search")) {
         const searchQuery = new URL(details.url).searchParams.get('q');
         if (searchQuery) {
             ensureUniqueSearchActivity(searchQuery);
-
             chrome.scripting.executeScript({
                 target: { tabId: details.tabId },
                 files: ["content.js"],
@@ -96,31 +95,28 @@ chrome.webNavigation.onCompleted.addListener((details) => {
     }
 }, { url: [{ urlMatches: 'https://www.google.com/search' }] });
 
-// Monitor new tab events
-chrome.tabs.onCreated.addListener((tab) => {
-    const lastRightClickedLink = rightClickedLinks.pop();
-    if (lastRightClickedLink) {
-        const lastActivity = sessionSearchActivities[sessionSearchActivities.length - 1];
-        if (lastActivity && !lastActivity.clickedLinks.includes(lastRightClickedLink)) {
-            lastActivity.clickedLinks.push(lastRightClickedLink);
+chrome.tabs.onCreated.addListener(() => {
+    const lastLink = rightClickedLinks.pop();
+    if (lastLink) {
+        const last = sessionSearchActivities[sessionSearchActivities.length - 1];
+        if (last && !last.clickedLinks.includes(lastLink)) {
+            last.clickedLinks.push(lastLink);
         }
     }
 });
 
-// Monitor tab updates to start/stop tracking
+const FORM_URL = "https://forms.gle/AjCuW8zVzPuNGbEk9";
+
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.status === "complete" && tab.url) {
-        if (tab.url.includes(formUrl) && userID && !trackingActive) {
+        if (tab.url.includes(FORM_URL) && userID && !trackingActive) {
             startTracking(tabId);
-        } else if (trackingActive && tabId === trackedTabId && !tab.url.includes(formUrl)) {
+        } else if (trackingActive && tabId === trackedTabId && !tab.url.includes(FORM_URL)) {
             stopTracking();
         }
     }
 });
 
-// Stop tracking if the form tab is closed
 chrome.tabs.onRemoved.addListener((tabId) => {
-    if (trackingActive && tabId === trackedTabId) {
-        stopTracking();
-    }
+    if (trackingActive && tabId === trackedTabId) stopTracking();
 });
