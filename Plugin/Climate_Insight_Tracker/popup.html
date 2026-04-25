@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="core/css/style.css">
+  <script src="popup.js" defer></script>
+  <title>Climate Insight Tracker</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      width: 300px;
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #f4f4f4;
+    }
+    #container {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      text-align: center;
+      width: 100%;
+    }
+    #logo {
+      width: 50px;
+      height: auto;
+      margin-bottom: 10px;
+    }
+    #titlelb {
+      font-size: 20px;
+      font-weight: bold;
+      margin: 5px 0 15px;
+      color: #333;
+    }
+    #userForm {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .mainInput, #btSubmit {
+      width: 80%;
+      padding: 10px;
+      margin-bottom: 10px;
+      font-size: 14px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    #btSubmit {
+      background-color: #4CAF50;
+      color: #fff;
+      font-weight: bold;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    #btSubmit:hover {
+      background-color: #45a049;
+    }
+    .infoButton {
+      width: 45%;
+      padding: 8px;
+      font-size: 12px;
+      margin: 5px;
+      cursor: pointer;
+      background-color: #333;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+    }
+    .infoButton:hover {
+      background-color: #555;
+    }
+  </style>
+</head>
+<body>
+  <div id="container">
+    <img id="logo" src="images/Vanderbilt-Logo.png" alt="Vanderbilt Logo">
+    <h3 id="titlelb">Climate Insight Tracker</h3>
+    <form id="userForm">
+      <input 
+        type="text" 
+        id="userID" 
+        placeholder="Enter User ID (e.g., R_12345)" 
+        maxlength="30" 
+        class="mainInput" 
+        aria-label="User ID Input"
+      >
+      <button type="submit" id="btSubmit">Submit</button>
+    </form>
+    <div style="display: flex; justify-content: space-between; width: 100%;">
+      <button id="btIns" class="infoButton">Instructions</button>
+      <button id="btHelp" class="infoButton">Help</button>
+    </div>
+  </div>
+</body>
+</html>
